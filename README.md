@@ -1,4 +1,6 @@
-# Devops_Concept_Repository
+# Devops_Concept
+
+
 
 # Docker Multi-stage Structure
 
@@ -29,6 +31,31 @@ Dockerfile
     ├── ENTRYPOINT
     └── CMD
 ```
+**Single Dockerfile example**
+```bash
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+CMD ["node", "src/index.js"]
+```
+```bash
+WORKDIR /app
+      ↓
+COPY package*.json ./
+      ↓
+package.json + package-lock.json
+      ↓
+RUN npm ci
+      ↓
+npm reads those files automatically
+      ↓
+dependencies installed
+      ↓
+node_modules/
+```
+
 
 **Detailed Structure**
 
@@ -48,17 +75,17 @@ Dockerfile
 │   │         ├── package.json
 │   │         └── package-lock.json
 │   │
-│   ├── INSTALL DEPENDENCIES
-│   │     └── Install dependencies by reading dependency files
+│   ├── INSTALL DEPENDENCIES (RUN npm ci)
+│   │     └── Install dependencies by reading dependency files like file package.json + package-lock.json
 │   │         ├── Node.js → npm ci / npm install
 │   │         ├── Java    → mvn dependency...
 │   │         ├── Python  → pip install...
 │   │         └── Go      → go mod download
 │   │
 │   ├── COPY
-│   │     └── Copy application source code
+│   │     └── Copy application all files src etc...
 │   │
-│   └── BUILD (if required)
+│   └── BUILD (if required) --> This command builds your Node.js application inside the Docker image. Below you can see structure.
 │         │
 │         ├── npm run build
 │         │       ↓
@@ -86,8 +113,7 @@ Dockerfile
 │                 └── index-def456.css
 │
 │         Note:
-│         dist/ contains the production-ready
-│         frontend build artifacts.
+│         dist/ contains the production-ready frontend build artifacts.
 │
 │
 └── 𝗦𝘁𝗮𝗴𝗲 𝟮: 𝗣𝗥𝗢𝗗𝗨𝗖𝗧𝗜𝗢𝗡
@@ -139,30 +165,6 @@ COPY --from=build <source> <destination>
 # Run application
 ```
 During the build stage, the application source code is compiled and bundled, producing build artifacts. In a multi-stage Docker build, we copy only those artifacts into the final Nginx image
-
-**Multi-Stage Dockerfile Example**
-```bash
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-CMD ["node", "src/index.js"]
-```
-
-WORKDIR /app
-      ↓
-COPY package*.json ./
-      ↓
-package.json + package-lock.json
-      ↓
-RUN npm ci
-      ↓
-npm reads those files automatically
-      ↓
-dependencies installed
-      ↓
-node_modules/
 
 **Frontend docker multi stage file**
 ```bash
