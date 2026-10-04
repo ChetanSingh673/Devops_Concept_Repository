@@ -2,46 +2,22 @@
 
 # Docker Multi-stage Structure
 
+**Normal structure**
 ```bash
 Dockerfile
 │
-├── Stage 1: BUILD
+├── 𝗦𝘁𝗮𝗴𝗲 𝟭: 𝗕𝗨𝗜𝗟𝗗
 │   │
-│   ├── FROM    (Base image defined according to the source code)
-│   ├── WORKDIR (/app)
-│   ├── COPY    (Dependency ---> package.json)
-│   ├── Install (Go to /app directory and install the dependency by reading the file (package.json + package-lock.json) using the npm,mvn,go,pip)
-|   |── COPY    (All files)
-│   └── Build   (if required) (npm look inside the package.json and finds: "build": "vite build". Then npm executes: vite build) (This command builds your Node.js application inside the Docker image. Below you can see)
-│          |──── Your source code
-|          |       ↓
-|          |──── COPY . .
-|          |       ↓ 
-|          |──── npm run build
-|          |       ↓
-|          |──── Application is compiled/bundled
-|          |       ↓
-|          └──── Build artifact is created in /app folder
-|                 You may get in the folder like below
-|                     ├── src/
-|                     ├── public/
-|                     ├── package.json
-|                     ├── package-lock.json
-|                     └── dist/
-|                           ├── index.html
-|                           ├── assets/
-|                           |      ├── index-abc123.js
-|                           |      └── index-def456.css
-|                           └── ...
-|                    Note: That dist/ directory contains the production-ready build artifacts.                         
-|
-|
-|
-|     
+│   ├── FROM
+│   ├── WORKDIR
+│   ├── COPY
+│   ├── Install
+│   ├── COPY
+│   └── Build
 │
-└── Stage 2: PRODUCTION
+└── 𝗦𝘁𝗮𝗴𝗲 𝟮: 𝗣𝗥𝗢𝗗𝗨𝗖𝗧𝗜𝗢𝗡
     │
-    ├── FROM node
+    ├── FROM
     ├── Create non-root user
     ├── Install required runtime packages
     ├── WORKDIR
@@ -52,7 +28,101 @@ Dockerfile
     ├── EXPOSE
     ├── ENTRYPOINT
     └── CMD
- ```   
+```
+
+**Detailed Structure**
+
+```bash
+Dockerfile
+│
+├── 𝗦𝘁𝗮𝗴𝗲 𝟭: 𝗕𝗨𝗜𝗟𝗗
+│   │
+│   ├── FROM
+│   │     └── Base image according to the application
+│   │
+│   ├── WORKDIR
+│   │     └── Set working directory, e.g. /app
+│   │
+│   ├── COPY
+│   │     └── Copy dependency files
+│   │         ├── package.json
+│   │         └── package-lock.json
+│   │
+│   ├── INSTALL DEPENDENCIES
+│   │     └── Install dependencies by reading dependency files
+│   │         ├── Node.js → npm ci / npm install
+│   │         ├── Java    → mvn dependency...
+│   │         ├── Python  → pip install...
+│   │         └── Go      → go mod download
+│   │
+│   ├── COPY
+│   │     └── Copy application source code
+│   │
+│   └── BUILD (if required)
+│         │
+│         ├── npm run build
+│         │       ↓
+│         ├── npm checks package.json
+│         │       ↓
+│         ├── Finds "build": "vite build"
+│         │       ↓
+│         ├── Executes vite build
+│         │       ↓
+│         ├── Application is compiled/bundled
+│         │       ↓
+│         └── Build artifacts are created
+│
+│         Example:
+│
+│         /app
+│         ├── src/
+│         ├── public/
+│         ├── package.json
+│         ├── package-lock.json
+│         └── dist/
+│             ├── index.html
+│             └── assets/
+│                 ├── index-abc123.js
+│                 └── index-def456.css
+│
+│         Note:
+│         dist/ contains the production-ready
+│         frontend build artifacts.
+│
+│
+└── 𝗦𝘁𝗮𝗴𝗲 𝟮: 𝗣𝗥𝗢𝗗𝗨𝗖𝗧𝗜𝗢𝗡
+    │
+    ├── FROM
+    │     └── Smaller runtime/base image
+    │
+    ├── Create non-root user
+    │
+    ├── Install required runtime packages
+    │
+    ├── WORKDIR
+    │
+    ├── COPY --from=build
+    │     └── Copy only required build artifacts
+    │
+    ├── COPY application/runtime files
+    │     └── Only if required
+    │
+    ├── Change ownership
+    │     └── chown
+    │
+    ├── USER
+    │     └── Run container as non-root user
+    │
+    ├── EXPOSE
+    │     └── Document application port
+    │
+    ├── ENTRYPOINT
+    │     └── Optional fixed executable
+    │
+    └── CMD
+          └── Default command/arguments
+ ```
+
 ```bash
 FROM <base-image> AS build
 
@@ -70,7 +140,7 @@ COPY --from=build <source> <destination>
 ```
 During the build stage, the application source code is compiled and bundled, producing build artifacts. In a multi-stage Docker build, we copy only those artifacts into the final Nginx image
 
-**Dockerfile Example**
+**Multi-Stage Dockerfile Example**
 ```bash
 FROM node:20-alpine
 WORKDIR /app
