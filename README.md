@@ -1,8 +1,7 @@
-# Devops_Concept
+<h1 align="center">DevOps_Concept</h1>
 
 
-
-# Docker Multi-stage Structure
+# Docker Multi-Stage Structure
 
 **Normal structure**
 ```bash
